@@ -1,0 +1,39 @@
+# Declarative configuration for the Malaysia Fuel Watch pipeline.
+# Everything the pipeline needs to know about its source lives here, so
+# adding a new dataset never requires touching the Python code.
+
+source:
+  name: fuel_price
+  description: >
+    Weekly retail prices of RON95 petrol, RON97 petrol and diesel in
+    Peninsular Malaysia, set under the Automatic Pricing Mechanism (APM).
+  url: https://storage.data.gov.my/commodities/fuelprice.parquet
+  catalogue_page: https://data.gov.my/data-catalogue/fuelprice
+  publisher: Ministry of Finance, via data.gov.my
+  licence: CC BY 4.0
+  update_cadence: weekly (announced Wednesday, effective Thursday)
+
+schema:
+  date_column: date
+  # data.gov.my ships both a "level" series (the price) and a "change" series
+  # (the week-on-week delta) in one table. We only want levels.
+  series_column: series_type
+  series_filter: level
+  # Columns to ignore when auto-detecting price series. Any other numeric
+  # column is treated as a fuel grade, so new grades appear automatically.
+  non_price_columns: [date, series_type]
+
+warehouse:
+  raw_table: raw_fuel_price
+  database: warehouse/fuel_watch.duckdb
+
+quality:
+  # A price outside this band means the source changed units or broke.
+  price_min_rm: 0.50
+  price_max_rm: 15.00
+  # Weekly data: more than this many days without an update is stale.
+  max_days_since_latest: 21
+  # Largest believable single-week move, in RM. Bigger = investigate.
+  max_weekly_move_rm: 1.50
+  # Fail the pipeline (non-zero exit) when a check errors. CI relies on this.
+  fail_on_error: true

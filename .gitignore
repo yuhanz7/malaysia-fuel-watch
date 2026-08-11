@@ -1,0 +1,17 @@
+# The warehouse is a build artefact — it is rebuilt from the raw snapshots.
+warehouse/
+
+# Raw snapshots are large and reproducible; the manifest that tracks them is not.
+data/raw/*/snapshot_date=*/
+!data/raw/*/_manifest.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

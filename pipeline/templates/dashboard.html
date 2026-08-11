@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malaysia Fuel Watch — weekly RON95, RON97 and diesel prices</title>
+<meta name="description" content="Weekly retail fuel prices in Malaysia, ingested from data.gov.my, modelled in DuckDB and refreshed automatically every Thursday.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --concrete: #e4e2dc;
+    --card: #faf9f6;
+    --rule: #cecbc3;
+    --ink: #16191a;
+    --ink-soft: #5c5f5c;
+    --board: #14181b;
+    --board-rule: #2b3236;
+    --up: #b4342b;
+    --down: #2f6b4f;
+    --flat: #6b6f6c;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--concrete);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  header.masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 20px;
+    margin-bottom: 34px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 7vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.94;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+  }
+
+  .standfirst {
+    max-width: 56ch;
+    margin: 0 0 22px;
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+  }
+
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .masthead-meta a { color: inherit; }
+
+  .notice {
+    background: #fff4d6;
+    border: 1px solid #d8b45a;
+    padding: 12px 16px;
+    margin: 0 0 26px;
+    font-size: 0.9rem;
+  }
+
+  /* ---------- the price board (signature) ---------- */
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 3px;
+    background: var(--board-rule);
+    border: 3px solid var(--board);
+    padding: 3px;
+    margin-bottom: 12px;
+  }
+
+  .panel {
+    background: var(--board);
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .panel-grade {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: var(--board);
+    background: var(--grade-colour, #888);
+    align-self: flex-start;
+    padding: 3px 9px;
+  }
+
+  .panel-price {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 8vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--grade-colour, #eee);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panel-price .unit {
+    font-size: 0.34em;
+    letter-spacing: 0.1em;
+    opacity: 0.72;
+    margin-left: 6px;
+  }
+
+  .panel-delta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: #9aa2a6;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+
+  .panel-delta b { font-weight: 600; }
+  .delta-up b { color: #e2705f; }
+  .delta-down b { color: #63b98c; }
+
+  .board-caption {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    margin-bottom: 56px;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { margin-bottom: 56px; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .section-note {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ---------- chart ---------- */
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .toggle-set, .range-set { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--card);
+    color: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    text-transform: uppercase;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+
+  button:hover { border-color: var(--ink); color: var(--ink); }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .toggle[aria-pressed="true"] {
+    background: var(--grade-colour);
+    border-color: var(--grade-colour);
+    color: #fff;
+  }
+
+  .range[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--concrete);
+  }
+
+  .chart-shell {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    padding: 10px 8px 4px;
+  }
+
+  #chart { display: block; width: 100%; }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--board);
+    color: #f2f2ef;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    padding: 9px 11px;
+    min-width: 132px;
+    opacity: 0;
+    transition: opacity 100ms ease;
+    z-index: 4;
+  }
+
+  .tooltip.visible { opacity: 1; }
+  .tooltip .tt-date { color: #9aa2a6; margin-bottom: 5px; letter-spacing: 0.05em; }
+  .tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; }
+  .tooltip .tt-row span:last-child { font-weight: 600; }
+
+  /* ---------- 52-week range bars ---------- */
+
+  .range-row {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .range-row:last-child { border-bottom: 0; }
+
+  .range-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .range-track {
+    position: relative;
+    height: 34px;
+  }
+
+  .range-bar {
+    position: absolute;
+    top: 15px;
+    height: 5px;
+    background: var(--grade-colour);
+    opacity: 0.26;
+  }
+
+  .range-avg {
+    position: absolute;
+    top: 10px;
+    width: 2px;
+    height: 15px;
+    background: var(--grade-colour);
+    opacity: 0.75;
+  }
+
+  .range-dot {
+    position: absolute;
+    top: 11px;
+    width: 13px;
+    height: 13px;
+    margin-left: -6px;
+    border-radius: 50%;
+    background: var(--grade-colour);
+  }
+
+  .range-tip {
+    position: absolute;
+    top: -4px;
+    transform: translateX(-50%);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--grade-colour);
+    white-space: nowrap;
+  }
+
+  .range-ends {
+    position: absolute;
+    top: 24px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  .range-ends--flat {
+    justify-content: center;
+    font-style: italic;
+  }
+
+  /* ---------- tables ---------- */
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th {
+    text-align: left;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--ink);
+    padding: 0 14px 7px 0;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  td.num {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grade-cell {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .grade-cell::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 8px;
+    background: var(--grade-colour, #888);
+  }
+
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .flat { color: var(--flat); }
+
+  /* ---------- data quality ---------- */
+
+  .checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .check {
+    background: var(--card);
+    padding: 14px 16px;
+  }
+
+  .check-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+  }
+
+  .pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+    background: var(--down);
+  }
+
+  .check.failed .pip { background: var(--up); }
+  .check.warned .pip { background: #c9922a; }
+  .check p { margin: 0; font-size: 0.83rem; color: var(--ink-soft); line-height: 1.45; }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    border-top: 2px solid var(--ink);
+    padding-top: 18px;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+
+  footer a { color: var(--ink); }
+  footer p { margin: 0 0 8px; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px 72px; }
+    header.masthead { padding-top: 36px; }
+    .range-row { grid-template-columns: 74px 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Automated data pipeline · data.gov.my</p>
+    <h1>Malaysia<br>Fuel Watch</h1>
+    <p class="standfirst">
+      Retail prices for RON95, RON97 and diesel are re-announced every Wednesday and take effect
+      Thursday. This page ingests the official series, models it, tests it and rebuilds itself
+      each week — nobody edits it by hand.
+    </p>
+    <div class="masthead-meta" id="masthead-meta"></div>
+  </header>
+
+  <div id="notice"></div>
+
+  <section aria-labelledby="board-heading" style="margin-bottom:0">
+    <h2 id="board-heading" class="eyebrow" style="margin-bottom:12px">This week at the pump</h2>
+    <div class="board" id="board"></div>
+    <p class="board-caption" id="board-caption"></p>
+  </section>
+
+  <section aria-labelledby="history-heading">
+    <div class="section-head">
+      <h2 id="history-heading">Price history</h2>
+      <p class="section-note">Weekly published price, RM per litre.</p>
+    </div>
+    <div class="controls">
+      <div class="toggle-set" id="toggles" role="group" aria-label="Show or hide fuel grades"></div>
+      <div class="range-set" id="ranges" role="group" aria-label="Time range"></div>
+    </div>
+    <div class="chart-shell">
+      <svg id="chart" role="img" aria-label="Line chart of weekly fuel prices"></svg>
+      <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="range-heading">
+    <div class="section-head">
+      <h2 id="range-heading">Where today sits</h2>
+      <p class="section-note">Latest price against the grade's own 52-week range. The tick marks the 52-week average.</p>
+    </div>
+    <div id="range-rows"></div>
+  </section>
+
+  <section aria-labelledby="annual-heading">
+    <div class="section-head">
+      <h2 id="annual-heading">Year by year</h2>
+      <p class="section-note">Volatility is the standard deviation of the weekly price within the year.</p>
+    </div>
+    <div class="table-scroll">
+      <table id="annual-table">
+        <thead>
+          <tr>
+            <th>Year</th><th>Grade</th><th>Average</th><th>Range</th>
+            <th>Volatility</th><th>Net change</th><th>Up</th><th>Down</th><th>Flat</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="moves-heading">
+    <div class="section-head">
+      <h2 id="moves-heading">Biggest weekly moves</h2>
+      <p class="section-note">The largest single-week changes on record.</p>
+    </div>
+    <div class="table-scroll">
+      <table id="moves-table">
+        <thead>
+          <tr><th>Grade</th><th>Week</th><th>Move</th><th>Change</th><th>Price after</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="quality-heading">
+    <div class="section-head">
+      <h2 id="quality-heading">Data quality</h2>
+      <p class="section-note" id="quality-note"></p>
+    </div>
+    <div class="checks" id="checks"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const DATA = /*__PAYLOAD__*/null;
+
+const $ = (id) => document.getElementById(id);
+const fmtRM = (v) => v === null || v === undefined ? "n/a" : "RM" + v.toFixed(2);
+const fmtSigned = (v, unit) => {
+  if (v === null || v === undefined) return "n/a";
+  if (Math.abs(v) < 0.005) return "no change";
+  return (v > 0 ? "+" : "") + v.toFixed(2) + (unit || "");
+};
+const moveClass = (v) => (v === null || Math.abs(v) < 0.005) ? "flat" : (v > 0 ? "up" : "down");
+const longDate = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB",
+  { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const shortDate = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB",
+  { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+
+/* ---------- masthead, notice, footer ---------- */
+
+function renderChrome() {
+  const m = DATA.meta;
+  $("masthead-meta").innerHTML = [
+    "Source: <a href=\"" + m.catalogue_page + "\">" + m.publisher + "</a>",
+    "Licence: " + m.licence,
+    "Updated: " + m.generated_at,
+    m.snapshots + " snapshot" + (m.snapshots === 1 ? "" : "s") + " landed"
+  ].map((s) => "<span>" + s + "</span>").join("");
+
+  if (m.is_sample) {
+    $("notice").innerHTML = '<p class="notice"><b>Sample data.</b> This page was built in ' +
+      'offline mode from the synthetic fixture in <code>tests/fixtures/</code>, not from the ' +
+      'live source. Run <code>python -m pipeline.run all</code> to rebuild it.</p>';
+  }
+
+  $("footer").innerHTML =
+    "<p>Data: <i>Price of Petroleum &amp; Diesel</i>, " + m.publisher + ", " +
+    "<a href=\"" + m.source_url + "\">" + m.source_url + "</a>, licensed " + m.licence + ". " +
+    "Published " + m.cadence + ".</p>" +
+    "<p>Not affiliated with or endorsed by the Government of Malaysia. " +
+    "Built with Python, DuckDB and GitHub Actions.</p>";
+}
+
+/* ---------- price board ---------- */
+
+function renderBoard() {
+  const board = $("board");
+  board.innerHTML = DATA.summary.map((s) => {
+    const dir = moveClass(s.change);
+    const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "—";
+    const delta = dir === "flat"
+      ? "held steady"
+      : arrow + " " + fmtSigned(s.change) + " (" + fmtSigned(s.change_pct, "%") + ")";
+    return '<div class="panel" style="--grade-colour:' + s.colour + '">' +
+      '<span class="panel-grade">' + s.label + "</span>" +
+      '<span class="panel-price" data-price="' + s.price + '">0.00<span class="unit">RM/L</span></span>' +
+      '<span class="panel-delta delta-' + dir + '"><b>' + delta + "</b></span>" +
+      "</div>";
+  }).join("");
+
+  const latest = DATA.summary[0];
+  $("board-caption").textContent =
+    "Week of " + longDate(latest.date) + " · " + latest.weeks_tracked + " weeks tracked since " +
+    "the series began";
+
+  animatePrices();
+}
+
+function animatePrices() {
+  const reduce = typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll(".panel-price").forEach((el) => {
+    const target = parseFloat(el.dataset.price);
+    const unit = '<span class="unit">RM/L</span>';
+    if (reduce) { el.innerHTML = target.toFixed(2) + unit; return; }
+    const start = performance.now();
+    const duration = 620;
+    const step = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.innerHTML = (target * eased).toFixed(2) + unit;
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* ---------- chart ---------- */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const state = { active: new Set(DATA.grades.map((g) => g.key)), months: 60 };
+const RANGES = [
+  { label: "1Y", months: 12 },
+  { label: "5Y", months: 60 },
+  { label: "All", months: null }
+];
+
+function el(name, attrs, text) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const key in attrs) node.setAttribute(key, attrs[key]);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function visibleIndices() {
+  const dates = DATA.series.dates;
+  if (state.months === null) return [0, dates.length - 1];
+  const last = new Date(dates[dates.length - 1] + "T00:00:00Z");
+  const cutoff = new Date(last);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - state.months);
+  let start = 0;
+  for (let i = 0; i < dates.length; i++) {
+    if (new Date(dates[i] + "T00:00:00Z") >= cutoff) { start = i; break; }
+  }
+  return [start, dates.length - 1];
+}
+
+let chartGeometry = null;
+
+function drawChart() {
+  const svg = $("chart");
+  const shell = svg.parentElement;
+  const width = Math.max(shell.clientWidth - 18, 280);
+  const height = width < 560 ? 280 : 360;
+  const pad = { top: 16, right: 14, bottom: 30, left: width < 560 ? 42 : 52 };
+
+  svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+  svg.setAttribute("height", height);
+  svg.innerHTML = "";
+
+  const [from, to] = visibleIndices();
+  const dates = DATA.series.dates.slice(from, to + 1);
+  const grades = DATA.grades.filter((g) => state.active.has(g.key));
+
+  let lo = Infinity, hi = -Infinity;
+  grades.forEach((g) => {
+    DATA.series.values[g.key].slice(from, to + 1).forEach((v) => {
+      if (v === null) return;
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    });
+  });
+  if (!isFinite(lo)) { lo = 0; hi = 1; }
+  const span = Math.max(hi - lo, 0.2);
+  lo -= span * 0.12;
+  hi += span * 0.12;
+
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
+  const x = (i) => pad.left + (dates.length === 1 ? plotW / 2 : (i / (dates.length - 1)) * plotW);
+  const y = (v) => pad.top + plotH - ((v - lo) / (hi - lo)) * plotH;
+
+  // horizontal gridlines
+  const ticks = 5;
+  for (let t = 0; t <= ticks; t++) {
+    const value = lo + ((hi - lo) * t) / ticks;
+    const yy = y(value);
+    svg.appendChild(el("line", {
+      x1: pad.left, x2: width - pad.right, y1: yy, y2: yy,
+      stroke: "#d7d4cc", "stroke-width": 1
+    }));
+    svg.appendChild(el("text", {
+      x: pad.left - 9, y: yy + 4, "text-anchor": "end",
+      "font-family": "IBM Plex Mono, monospace", "font-size": 11, fill: "#5c5f5c"
+    }, value.toFixed(2)));
+  }
+
+  // x-axis ticks: years over long spans, months when zoomed in
+  const spanDays = (new Date(dates[dates.length - 1] + "T00:00:00Z") -
+    new Date(dates[0] + "T00:00:00Z")) / 86400000;
+  const byMonth = spanDays <= 500;
+  let lastKey = null;
+  let lastX = -Infinity;
+  dates.forEach((d, i) => {
+    const key = byMonth ? d.slice(0, 7) : d.slice(0, 4);
+    if (key === lastKey) return;
+    lastKey = key;
+    if (x(i) - lastX < 58 || x(i) > width - pad.right - 14) return;
+    lastX = x(i);
+    const label = byMonth
+      ? new Date(d + "T00:00:00Z").toLocaleDateString("en-GB",
+          { month: "short", year: "2-digit", timeZone: "UTC" })
+      : key;
+    svg.appendChild(el("text", {
+      x: x(i), y: height - 9, "text-anchor": "middle",
+      "font-family": "IBM Plex Mono, monospace", "font-size": 11, fill: "#5c5f5c"
+    }, label));
+  });
+
+  // series
+  grades.forEach((g) => {
+    const values = DATA.series.values[g.key].slice(from, to + 1);
+    let path = "";
+    values.forEach((v, i) => {
+      if (v === null) return;
+      path += (path === "" ? "M" : "L") + x(i).toFixed(1) + " " + y(v).toFixed(1);
+    });
+    svg.appendChild(el("path", {
+      d: path, fill: "none", stroke: g.colour,
+      "stroke-width": 1.9, "stroke-linejoin": "round", "stroke-linecap": "round"
+    }));
+  });
+
+  const hover = el("g", { id: "hover", visibility: "hidden" });
+  hover.appendChild(el("line", {
+    id: "hover-line", y1: pad.top, y2: pad.top + plotH, stroke: "#16191a", "stroke-width": 1,
+    "stroke-dasharray": "3 3"
+  }));
+  grades.forEach((g) => {
+    hover.appendChild(el("circle", {
+      class: "hover-dot", "data-grade": g.key, r: 4.2, fill: g.colour,
+      stroke: "#faf9f6", "stroke-width": 1.6
+    }));
+  });
+  svg.appendChild(hover);
+
+  chartGeometry = { from, to, dates, grades, x, y, pad, plotW, width, height };
+}
+
+function handleHover(event) {
+  if (!chartGeometry) return;
+  const svg = $("chart");
+  const rect = svg.getBoundingClientRect();
+  const scale = chartGeometry.width / rect.width;
+  const px = (event.clientX - rect.left) * scale;
+  const { dates, from, grades, x, y, pad, plotW } = chartGeometry;
+
+  const ratio = (px - pad.left) / plotW;
+  const index = Math.round(Math.min(Math.max(ratio, 0), 1) * (dates.length - 1));
+  if (!isFinite(index)) return;
+
+  const hover = svg.querySelector("#hover");
+  hover.setAttribute("visibility", "visible");
+  hover.querySelector("#hover-line").setAttribute("x1", x(index));
+  hover.querySelector("#hover-line").setAttribute("x2", x(index));
+
+  const rows = [];
+  hover.querySelectorAll(".hover-dot").forEach((dot) => {
+    const key = dot.dataset.grade;
+    const value = DATA.series.values[key][from + index];
+    if (value === null || value === undefined) { dot.setAttribute("visibility", "hidden"); return; }
+    dot.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", x(index));
+    dot.setAttribute("cy", y(value));
+    const grade = grades.find((g) => g.key === key);
+    rows.push('<div class="tt-row"><span style="color:' + grade.colour + '">' + grade.label +
+      "</span><span>" + fmtRM(value) + "</span></div>");
+  });
+
+  const tip = $("tooltip");
+  tip.innerHTML = '<div class="tt-date">' + shortDate(dates[index]) + "</div>" + rows.join("");
+  tip.classList.add("visible");
+  const tipX = (x(index) / chartGeometry.width) * rect.width;
+  const flip = tipX > rect.width - 165;
+  tip.style.left = (flip ? tipX - tip.offsetWidth - 14 : tipX + 14) + "px";
+  tip.style.top = "18px";
+}
+
+function clearHover() {
+  const hover = $("chart").querySelector("#hover");
+  if (hover) hover.setAttribute("visibility", "hidden");
+  $("tooltip").classList.remove("visible");
+}
+
+function renderControls() {
+  $("toggles").innerHTML = DATA.grades.map((g) =>
+    '<button class="toggle" type="button" data-grade="' + g.key + '" aria-pressed="true" ' +
+    'style="--grade-colour:' + g.colour + '">' + g.label + "</button>").join("");
+
+  $("ranges").innerHTML = RANGES.map((r) =>
+    '<button class="range" type="button" data-months="' + (r.months === null ? "all" : r.months) +
+    '" aria-pressed="' + (r.months === state.months) + '">' + r.label + "</button>").join("");
+
+  $("toggles").querySelectorAll(".toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.grade;
+      if (state.active.has(key)) {
+        if (state.active.size === 1) return; // always leave one grade on
+        state.active.delete(key);
+      } else {
+        state.active.add(key);
+      }
+      btn.setAttribute("aria-pressed", state.active.has(key));
+      drawChart();
+      clearHover();
+    });
+  });
+
+  $("ranges").querySelectorAll(".range").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const raw = btn.dataset.months;
+      state.months = raw === "all" ? null : parseInt(raw, 10);
+      $("ranges").querySelectorAll(".range").forEach((b) =>
+        b.setAttribute("aria-pressed", b === btn));
+      drawChart();
+      clearHover();
+    });
+  });
+}
+
+/* ---------- 52-week range rows ---------- */
+
+function renderRanges() {
+  $("range-rows").innerHTML = DATA.summary.map((s) => {
+    const lo = s.low_52w, hi = s.high_52w;
+    // A grade that hasn't moved in 52 weeks has no real range to plot — show
+    // it as a centred dot with a plain note instead of a zero-width bar
+    // flanked by two copies of the same price, which reads as a real range.
+    const flat = (hi - lo) < 0.005;
+    const padPct = 12;
+    const pos = flat ? () => 50 : (v) => padPct + ((v - lo) / (hi - lo)) * (100 - padPct * 2);
+    const ends = flat
+      ? '<div class="range-ends range-ends--flat">unchanged for 52 weeks</div>'
+      : '<div class="range-ends"><span>' + fmtRM(lo) + "</span><span>" + fmtRM(hi) + "</span></div>";
+    return '<div class="range-row" style="--grade-colour:' + s.colour + '">' +
+      '<div class="range-label">' + s.label + "</div>" +
+      '<div class="range-track">' +
+        (flat ? "" : '<div class="range-bar" style="left:' + pos(lo) + "%;width:" + (pos(hi) - pos(lo)) + '%"></div>') +
+        (flat ? "" : '<div class="range-avg" style="left:' + pos(s.avg_52w) + '%"></div>') +
+        '<div class="range-dot" style="left:' + pos(s.price) + '%"></div>' +
+        '<div class="range-tip" style="left:' + pos(s.price) + '%">' + fmtRM(s.price) + "</div>" +
+        ends +
+      "</div></div>";
+  }).join("");
+}
+
+/* ---------- tables ---------- */
+
+function renderTables() {
+  const colours = {};
+  DATA.summary.forEach((s) => { colours[s.label] = s.colour; });
+
+  $("annual-table").querySelector("tbody").innerHTML = DATA.annual.map((r) =>
+    "<tr>" +
+      '<td class="num">' + r.year + "</td>" +
+      '<td class="grade-cell" style="--grade-colour:' + (colours[r.grade] || "#888") + '">' + r.grade + "</td>" +
+      '<td class="num">' + fmtRM(r.avg) + "</td>" +
+      '<td class="num">' + fmtRM(r.min) + " – " + fmtRM(r.max) + "</td>" +
+      '<td class="num">' + (r.volatility === null ? "n/a" : r.volatility.toFixed(3)) + "</td>" +
+      '<td class="num ' + moveClass(r.net_pct) + '">' + fmtSigned(r.net_pct, "%") + "</td>" +
+      '<td class="num">' + r.up + "</td>" +
+      '<td class="num">' + r.down + "</td>" +
+      '<td class="num">' + r.flat + "</td>" +
+    "</tr>").join("");
+
+  $("moves-table").querySelector("tbody").innerHTML = DATA.moves.map((r) =>
+    "<tr>" +
+      '<td class="grade-cell" style="--grade-colour:' + (colours[r.grade] || "#888") + '">' + r.grade + "</td>" +
+      "<td>" + shortDate(r.date) + "</td>" +
+      '<td class="num ' + moveClass(r.change) + '">' + fmtSigned(r.change) + "</td>" +
+      '<td class="num ' + moveClass(r.change) + '">' + fmtSigned(r.change_pct, "%") + "</td>" +
+      '<td class="num">' + fmtRM(r.price) + "</td>" +
+    "</tr>").join("");
+}
+
+/* ---------- data quality ---------- */
+
+function renderChecks() {
+  const passed = DATA.quality.filter((c) => c.passed).length;
+  $("quality-note").textContent = passed + " of " + DATA.quality.length +
+    " checks passed on the run that built this page.";
+
+  $("checks").innerHTML = DATA.quality.map((c) => {
+    const cls = c.passed ? "" : (c.severity === "warn" ? "warned" : "failed");
+    const status = c.passed ? "pass" : c.failing_rows.toLocaleString() + " row" +
+      (c.failing_rows === 1 ? "" : "s") + " flagged";
+    return '<div class="check ' + cls + '">' +
+      '<div class="check-head"><span class="pip"></span>' + c.name.replace(/_/g, " ") +
+      "</div><p>" + c.description + " <b>(" + status + ")</b></p></div>";
+  }).join("");
+}
+
+/* ---------- boot ---------- */
+
+renderChrome();
+renderBoard();
+renderControls();
+renderRanges();
+renderTables();
+renderChecks();
+drawChart();
+
+const svg = $("chart");
+svg.addEventListener("mousemove", handleHover);
+svg.addEventListener("mouseleave", clearHover);
+svg.addEventListener("touchmove", (e) => {
+  if (e.touches.length) handleHover(e.touches[0]);
+}, { passive: true });
+svg.addEventListener("touchend", clearHover);
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { drawChart(); clearHover(); }, 120);
+});
+</script>
+</body>
+</html>

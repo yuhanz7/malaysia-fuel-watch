@@ -1,0 +1,44 @@
+name: Weekly refresh
+
+# Fuel prices are announced on Wednesday evening and take effect Thursday.
+# This runs Thursday 02:00 UTC (10:00 Malaysia time) and commits the refreshed
+# report and charts, so the repository always shows current numbers.
+on:
+  schedule:
+    - cron: "0 2 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the pipeline
+        # Fails the job if a blocking data quality check trips, so a broken
+        # upstream file never gets published as if it were fine.
+        run: python -m pipeline.run all
+
+      - name: Commit refreshed outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ data/raw/*/_manifest.json
+          if git diff --staged --quiet; then
+            echo "No change in the published data this week."
+          else
+            git commit -m "chore: weekly data refresh $(date -u +%Y-%m-%d)"
+            git push
+          fi
