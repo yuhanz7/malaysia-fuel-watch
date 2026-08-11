@@ -5,10 +5,10 @@ official dataset from [data.gov.my](https://data.gov.my/data-catalogue/fuelprice
 DuckDB, testing it, and publishing a refreshed report every Thursday morning without anyone
 touching a keyboard.
 
-[![CI](https://github.com/<your-username>/malaysia-fuel-watch/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/malaysia-fuel-watch/actions/workflows/ci.yml)
-[![Weekly refresh](https://github.com/<your-username>/malaysia-fuel-watch/actions/workflows/weekly-refresh.yml/badge.svg)](https://github.com/<your-username>/malaysia-fuel-watch/actions/workflows/weekly-refresh.yml)
+[![CI](https://github.com/yuhanz7/malaysia-fuel-watch/actions/workflows/ci.yml/badge.svg)](https://github.com/yuhanz7/malaysia-fuel-watch/actions/workflows/ci.yml)
+[![Weekly refresh](https://github.com/yuhanz7/malaysia-fuel-watch/actions/workflows/weekly-refresh.yml/badge.svg)](https://github.com/yuhanz7/malaysia-fuel-watch/actions/workflows/weekly-refresh.yml)
 
-**➡️ [Open the live dashboard](https://<your-username>.github.io/malaysia-fuel-watch/)** · [read the Markdown report](docs/REPORT.md)
+**➡️ [Open the live dashboard](https://yuhanz7.github.io/malaysia-fuel-watch/)** · [read the Markdown report](docs/REPORT.md)
 
 ![Weekly retail fuel prices](docs/charts/price_history.png)
 
@@ -54,7 +54,7 @@ published, and the whole thing runs on a schedule.
 ## Quickstart
 
 ```bash
-git clone https://github.com/<your-username>/malaysia-fuel-watch.git
+git clone https://github.com/yuhanz7/malaysia-fuel-watch.git
 cd malaysia-fuel-watch
 pip install -r requirements.txt
 
