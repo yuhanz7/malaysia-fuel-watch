@@ -1,6 +1,6 @@
 # Malaysia Fuel Watch — automated report
 
-_Generated 2026-08-11 15:36 UTC by the pipeline in this repository. Do not edit by hand._
+_Generated 2026-08-13 04:03 UTC by the pipeline in this repository. Do not edit by hand._
 
 
 **Source:** [Ministry of Finance, via data.gov.my](https://data.gov.my/data-catalogue/fuelprice) · `https://storage.data.gov.my/commodities/fuelprice.parquet`
@@ -103,7 +103,7 @@ _Generated 2026-08-11 15:36 UTC by the pipeline in this repository. Do not edit 
 
 ## Ingestion log
 
-- Snapshots landed: **1**
-- Latest snapshot: `2026-08-11` (945 source rows, 2017-03-30 to 2026-08-06)
+- Snapshots landed: **2**
+- Latest snapshot: `2026-08-13` (945 source rows, 2017-03-30 to 2026-08-06)
 - Source fingerprint: `0050b6332a14b51b…`
 
