@@ -103,5 +103,26 @@
     "min_date": "2017-03-30",
     "max_date": "2026-09-03",
     "sha256": "ec14c0c8dc3d34586a2a7fe09aead8e981e9e91f1e5b49462cc86b42b55eb690"
+  },
+  {
+    "snapshot_date": "2026-09-10",
+    "fetched_at_utc": "2026-09-10T06:52:44+00:00",
+    "origin": "https://storage.data.gov.my/commodities/fuelprice.parquet",
+    "rows": 955,
+    "columns": [
+      "series_type",
+      "date",
+      "ron95",
+      "ron97",
+      "diesel",
+      "diesel_eastmsia",
+      "ron95_budi95",
+      "ron95_skps",
+      "diesel_skds",
+      "diesel_budi"
+    ],
+    "min_date": "2017-03-30",
+    "max_date": "2026-09-10",
+    "sha256": "93692b64c8a073eaecac5fa607b3901274b0923b27011aab2f66385e93aa504b"
   }
 ]
