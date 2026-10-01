@@ -1,6 +1,6 @@
 # Malaysia Fuel Watch — automated report
 
-_Generated 2026-09-24 07:00 UTC by the pipeline in this repository. Do not edit by hand._
+_Generated 2026-10-01 08:05 UTC by the pipeline in this repository. Do not edit by hand._
 
 
 **Source:** [Ministry of Finance, via data.gov.my](https://data.gov.my/data-catalogue/fuelprice) · `https://storage.data.gov.my/commodities/fuelprice.parquet`
@@ -8,8 +8,8 @@ _Generated 2026-09-24 07:00 UTC by the pipeline in this repository. Do not edit 
 
 ## Headline
 
-- Latest published week: **24 September 2026**.
-- This week: DIESEL +0.15 to RM5.42; RON95 +0.20 to RM4.57; RON97 +0.20 to RM5.05.
+- Latest published week: **01 October 2026**.
+- This week: DIESEL -0.15 to RM5.27; RON95 -0.05 to RM4.52; RON97 -0.05 to RM5.00.
 - 3 of 8 grades sit above their own 52-week average, 0 below.
 - DIESEL_BUDI is the least volatile grade on record — its price moved in only 0% of tracked weeks.
 
@@ -17,14 +17,14 @@ _Generated 2026-09-24 07:00 UTC by the pipeline in this repository. Do not edit 
 
 | Grade | Latest | Week on week | 52-week range | vs 52-week avg | Year on year | Weeks tracked |
 | --- | --- | --- | --- | --- | --- | --- |
-| DIESEL | RM5.42 | +0.15 | RM2.84 – RM6.72 | +34.79% | +84.98% | 480 |
-| DIESEL_BUDI | RM2.10 | no change | RM2.10 – RM2.10 | no change | n/a | 13 |
-| DIESEL_EASTMSIA | RM2.15 | no change | RM2.15 – RM2.15 | no change | no change | 480 |
-| DIESEL_SKDS | RM2.15 | no change | RM2.15 – RM2.15 | no change | no change | 121 |
-| RON95 | RM4.57 | +0.20 | RM2.52 – RM4.57 | +39.94% | +122.93% | 480 |
-| RON95_BUDI95 | RM1.99 | no change | RM1.99 – RM1.99 | no change | n/a | 52 |
-| RON95_SKPS | RM2.05 | no change | RM2.05 – RM2.05 | no change | n/a | 52 |
-| RON97 | RM5.05 | +0.20 | RM3.08 – RM5.35 | +28.50% | +57.32% | 480 |
+| DIESEL | RM5.27 | -0.15 | RM2.84 – RM6.72 | +29.61% | +79.86% | 481 |
+| DIESEL_BUDI | RM2.10 | no change | RM2.10 – RM2.10 | no change | n/a | 14 |
+| DIESEL_EASTMSIA | RM2.15 | no change | RM2.15 – RM2.15 | no change | no change | 481 |
+| DIESEL_SKDS | RM2.15 | no change | RM2.15 – RM2.15 | no change | no change | 122 |
+| RON95 | RM4.52 | -0.05 | RM2.52 – RM4.57 | +36.86% | +73.85% | 481 |
+| RON95_BUDI95 | RM1.99 | no change | RM1.99 – RM1.99 | no change | no change | 53 |
+| RON95_SKPS | RM2.05 | no change | RM2.05 – RM2.05 | no change | no change | 53 |
+| RON97 | RM5.00 | -0.05 | RM3.08 – RM5.35 | +26.12% | +55.76% | 481 |
 
 ![Latest price within the 52-week range](charts/current_vs_52w_range.png)
 
@@ -36,14 +36,14 @@ _Generated 2026-09-24 07:00 UTC by the pipeline in this repository. Do not edit 
 
 | Year | Grade | Average | Range | Volatility (σ) | Net change | Weeks up | Weeks down | Weeks flat |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026 | DIESEL | RM4.36 | RM2.84 – RM6.72 | 1.005 | +84.35% | 21 | 13 | 5 |
-| 2026 | DIESEL_BUDI | RM2.10 | RM2.10 – RM2.10 | 0.000 | no change | 0 | 0 | 12 |
-| 2026 | DIESEL_EASTMSIA | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 39 |
-| 2026 | DIESEL_SKDS | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 39 |
-| 2026 | RON95 | RM3.48 | RM2.52 – RM4.57 | 0.611 | +78.52% | 17 | 12 | 10 |
-| 2026 | RON95_BUDI95 | RM1.99 | RM1.99 – RM1.99 | 0.000 | no change | 0 | 0 | 39 |
-| 2026 | RON95_SKPS | RM2.05 | RM2.05 – RM2.05 | 0.000 | no change | 0 | 0 | 39 |
-| 2026 | RON97 | RM4.17 | RM3.08 – RM5.35 | 0.710 | +59.81% | 16 | 13 | 10 |
+| 2026 | DIESEL | RM4.38 | RM2.84 – RM6.72 | 1.003 | +79.25% | 21 | 14 | 5 |
+| 2026 | DIESEL_BUDI | RM2.10 | RM2.10 – RM2.10 | 0.000 | no change | 0 | 0 | 13 |
+| 2026 | DIESEL_EASTMSIA | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 40 |
+| 2026 | DIESEL_SKDS | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 40 |
+| 2026 | RON95 | RM3.51 | RM2.52 – RM4.57 | 0.625 | +76.56% | 17 | 13 | 10 |
+| 2026 | RON95_BUDI95 | RM1.99 | RM1.99 – RM1.99 | 0.000 | no change | 0 | 0 | 40 |
+| 2026 | RON95_SKPS | RM2.05 | RM2.05 – RM2.05 | 0.000 | no change | 0 | 0 | 40 |
+| 2026 | RON97 | RM4.19 | RM3.08 – RM5.35 | 0.713 | +58.23% | 16 | 14 | 10 |
 | 2025 | DIESEL | RM2.96 | RM2.74 – RM3.18 | 0.122 | -1.34% | 18 | 17 | 17 |
 | 2025 | DIESEL_EASTMSIA | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 52 |
 | 2025 | DIESEL_SKDS | RM2.15 | RM2.15 – RM2.15 | 0.000 | no change | 0 | 0 | 52 |
@@ -103,7 +103,7 @@ _Generated 2026-09-24 07:00 UTC by the pipeline in this repository. Do not edit 
 
 ## Ingestion log
 
-- Snapshots landed: **8**
-- Latest snapshot: `2026-09-24` (959 source rows, 2017-03-30 to 2026-09-24)
-- Source fingerprint: `ee72176ca438b42a…`
+- Snapshots landed: **9**
+- Latest snapshot: `2026-10-01` (961 source rows, 2017-03-30 to 2026-10-01)
+- Source fingerprint: `181dd64528ebc074…`
 
